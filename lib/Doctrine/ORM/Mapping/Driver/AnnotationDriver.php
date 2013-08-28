@@ -205,7 +205,7 @@ class AnnotationDriver extends AbstractAnnotationDriver
             $metadata->setInheritanceType(constant('Doctrine\ORM\Mapping\ClassMetadata::INHERITANCE_TYPE_' . $inheritanceTypeAnnot->value));
 
             if ($metadata->inheritanceType != \Doctrine\ORM\Mapping\ClassMetadata::INHERITANCE_TYPE_NONE) {
-                // Evaluate DiscriminatorColumn annotation
+                // Evaluate DiscriminatorColumn and JoinedDiscriminatorColumn annotations
                 if (isset($classAnnotations['Doctrine\ORM\Mapping\DiscriminatorColumn'])) {
                     $discrColumnAnnot = $classAnnotations['Doctrine\ORM\Mapping\DiscriminatorColumn'];
                     $metadata->setDiscriminatorColumn(array(
@@ -213,6 +213,14 @@ class AnnotationDriver extends AbstractAnnotationDriver
                         'type' => $discrColumnAnnot->type,
                         'length' => $discrColumnAnnot->length,
                         'columnDefinition'    => $discrColumnAnnot->columnDefinition
+                    ));
+                } elseif (isset($classAnnotations['Doctrine\ORM\Mapping\JoinedDiscriminatorColumn'])) {
+                    $joinedDiscrColumnAnnot = $classAnnotations['Doctrine\ORM\Mapping\JoinedDiscriminatorColumn'];
+                    $metadata->setJoinedDiscriminatorColumn(array(
+                        'relationship' => $joinedDiscrColumnAnnot->relationship,
+                        'column' => $joinedDiscrColumnAnnot->column,
+                        'type' => $joinedDiscrColumnAnnot->type,
+                        'length' => $joinedDiscrColumnAnnot->length,
                     ));
                 } else {
                     $metadata->setDiscriminatorColumn(array('name' => 'dtype', 'type' => 'string', 'length' => 255));

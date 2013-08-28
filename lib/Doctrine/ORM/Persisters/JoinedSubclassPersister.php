@@ -332,6 +332,20 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
             $joinSql .= implode(' AND ', $conditions);
         }
 
+	    if (! $this->class->discriminatorColumn) {
+            $conditions = array();
+            $association = $this->class->associationMappings[$this->class->joinedDiscriminatorColumn['relationship']];
+            $tableAlias = $this->getSQLTableAlias($association['targetEntity'], $this->class->joinedDiscriminatorColumn['relationship']);
+            $associationClass = $this->em->getClassMetadata($association['targetEntity']);
+
+            $joinSql .= ' JOIN ' . $this->quoteStrategy->getTableName($associationClass, $this->platform) . ' ' . $tableAlias . ' ON ';
+            foreach ($association['joinColumns'] as $joinColumn) {
+                $conditions[] = $baseTableAlias . '.' . $joinColumn['name'] . ' = ' . $tableAlias . '.' . $joinColumn['referencedColumnName'];
+            }
+
+            $joinSql .= implode(' AND ', $conditions);
+        }
+
         if ($assoc != null && $assoc['type'] == ClassMetadata::MANY_TO_MANY) {
             $joinSql .= $this->getSelectManyToManyJoinSQL($assoc);
         }
@@ -429,11 +443,21 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
 
         $columnList         = array();
         $this->rsm          = new ResultSetMapping();
-        $discrColumn        = $this->class->discriminatorColumn['name'];
         $baseTableAlias     = $this->getSQLTableAlias($this->class->name);
+
+        if ($this->class->discriminatorColumn) {
+            $discrColumn = $this->class->discriminatorColumn['name'];
+        } else {
+            $discrColumn = $this->class->joinedDiscriminatorColumn['column'];
+        }
+
         $resultColumnName   = $this->platform->getSQLResultCasing($discrColumn);
 
         $this->rsm->addEntityResult($this->class->name, 'r');
+        if (! $this->class->discriminatorColumn) {
+            $association = $this->class->associationMappings[$this->class->joinedDiscriminatorColumn['relationship']];
+        }
+
         $this->rsm->setDiscriminatorColumn('r', $resultColumnName);
         $this->rsm->addMetaResult('r', $resultColumnName, $discrColumn);
 
@@ -465,12 +489,15 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
             }
         }
 
-        // Add discriminator column (DO NOT ALIAS, see AbstractEntityInheritancePersister#processSQLResult).
-        $tableAlias = ($this->class->rootEntityName == $this->class->name)
-            ? $baseTableAlias
-            : $this->getSQLTableAlias($this->class->rootEntityName);
-
-        $columnList[] = $tableAlias . '.' . $discrColumn;
+        if ($this->class->discriminatorColumn) {
+            // Add discriminator column (DO NOT ALIAS, see AbstractEntityInheritancePersister#processSQLResult).
+            $tableAlias = ($this->class->rootEntityName == $this->class->name)
+                ? $baseTableAlias
+                : $this->getSQLTableAlias($this->class->rootEntityName);
+            $columnList[] = $tableAlias . '.' . $discrColumn;
+        } else {
+            $columnList[] = $this->getSQLTableAlias($association['targetEntity'], $this->class->joinedDiscriminatorColumn['relationship']) . '.' . $discrColumn;
+        }
 
         // sub tables
         foreach ($this->class->subClasses as $subClassName) {

@@ -93,6 +93,7 @@ class ClassMetadataFactory extends AbstractClassMetadataFactory
         if ($parent) {
             $class->setInheritanceType($parent->inheritanceType);
             $class->setDiscriminatorColumn($parent->discriminatorColumn);
+            $class->setJoinedDiscriminatorColumn($parent->joinedDiscriminatorColumn);
             $class->setIdGeneratorType($parent->generatorType);
             $this->addInheritedFields($class, $parent);
             $this->addInheritedRelations($class, $parent);
@@ -205,7 +206,7 @@ class ClassMetadataFactory extends AbstractClassMetadataFactory
                 if (count($class->discriminatorMap) == 0) {
                     throw MappingException::missingDiscriminatorMap($class->name);
                 }
-                if ( ! $class->discriminatorColumn) {
+                if ( ! $class->discriminatorColumn && ! $class->joinedDiscriminatorColumn) {
                     throw MappingException::missingDiscriminatorColumn($class->name);
                 }
             } else if ($parent && !$class->reflClass->isAbstract() && !in_array($class->name, array_values($class->discriminatorMap))) {

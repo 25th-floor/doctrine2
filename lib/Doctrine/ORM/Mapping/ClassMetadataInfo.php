@@ -418,6 +418,14 @@ class ClassMetadataInfo implements ClassMetadata
     public $discriminatorColumn;
 
     /**
+     * READ-ONLY: The definition of the joined discriminator column used in JOINED and
+     * SINGLE_TABLE inheritance mappings.
+     *
+     * @var array
+     */
+    public $joinedDiscriminatorColumn;
+
+    /**
      * READ-ONLY: The primary table definition. The definition is an array with the
      * following entries:
      *
@@ -2561,6 +2569,22 @@ class ClassMetadataInfo implements ClassMetadata
             }
 
             $this->discriminatorColumn = $columnDef;
+        }
+    }
+
+    /**
+     * Sets the joined discriminator column definition.
+     *
+     * @param array $columnDef
+     *
+     * @return void
+     *
+     * @todo Checking values (See setDiscriminatorColumn)!!
+     */
+    public function setJoinedDiscriminatorColumn($columnDef)
+    {
+        if ($columnDef !== null) {
+            $this->joinedDiscriminatorColumn = $columnDef;
         }
     }
 
